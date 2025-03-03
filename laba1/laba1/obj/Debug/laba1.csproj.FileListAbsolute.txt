@@ -1,0 +1,11 @@
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\bin\Debug\laba1.exe.config
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\bin\Debug\laba1.exe
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\bin\Debug\laba1.pdb
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.csproj.AssemblyReference.cache
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.Properties.Resources.resources
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.csproj.GenerateResource.cache
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.csproj.CoreCompileInputs.cache
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.exe
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.pdb
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\bin\Debug\Resources\Manual.pdf
+C:\Users\frikm\OneDrive\Рабочий стол\laba1\laba1\laba1\obj\Debug\laba1.Compiller.resources
