@@ -54,6 +54,8 @@
             this.списокЛитературыToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.исходныйКодПрограммыToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.пускToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.лексическийАнализToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.синтаксическийАнализToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.справкаToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.вызовСправкиToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -239,9 +241,24 @@
             // 
             // пускToolStripMenuItem
             // 
+            this.пускToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { this.лексическийАнализToolStripMenuItem, this.синтаксическийАнализToolStripMenuItem });
             this.пускToolStripMenuItem.Name = "пускToolStripMenuItem";
             this.пускToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.пускToolStripMenuItem.Text = "Пуск";
+            // 
+            // лексическийАнализToolStripMenuItem
+            // 
+            this.лексическийАнализToolStripMenuItem.Name = "лексическийАнализToolStripMenuItem";
+            this.лексическийАнализToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.лексическийАнализToolStripMenuItem.Text = "Лексический анализ";
+            this.лексическийАнализToolStripMenuItem.Click += new System.EventHandler(this.лексическийАнализToolStripMenuItem_Click);
+            // 
+            // синтаксическийАнализToolStripMenuItem
+            // 
+            this.синтаксическийАнализToolStripMenuItem.Name = "синтаксическийАнализToolStripMenuItem";
+            this.синтаксическийАнализToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            this.синтаксическийАнализToolStripMenuItem.Text = "Синтаксический анализ";
+            this.синтаксическийАнализToolStripMenuItem.Click += new System.EventHandler(this.синтаксическийАнализToolStripMenuItem_Click);
             // 
             // справкаToolStripMenuItem
             // 
@@ -423,6 +440,7 @@
             this.richTextBox2.Size = new System.Drawing.Size(754, 166);
             this.richTextBox2.TabIndex = 3;
             this.richTextBox2.Text = "";
+            this.richTextBox2.TextChanged += new System.EventHandler(this.richTextBox2_TextChanged);
             // 
             // Compiller
             // 
@@ -442,6 +460,10 @@
             this.ResumeLayout(false);
             this.PerformLayout();
         }
+
+        private System.Windows.Forms.ToolStripMenuItem синтаксическийАнализToolStripMenuItem;
+
+        private System.Windows.Forms.ToolStripMenuItem лексическийАнализToolStripMenuItem;
 
         private System.Windows.Forms.ToolStripButton toolStripButton9;
         private System.Windows.Forms.ToolStripButton toolStripButton10;
