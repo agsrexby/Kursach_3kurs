@@ -258,5 +258,46 @@ namespace laba1
                 MessageBoxIcon.Information
             );
         }
+
+        private void richTextBox2_TextChanged(object sender, EventArgs e)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        private void пускToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string input = richTextBox1.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                MessageBox.Show("Введите текст для анализа.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // ЛЕКСИЧЕСКИЙ АНАЛИЗ
+            Lexer lexer = new Lexer(input);
+            List<Token> tokens = lexer.Tokenize();
+
+            //dataGridViewTokens.Rows.Clear();
+            //foreach (var token in tokens)
+            //{
+            //    dataGridViewTokens.Rows.Add(token.Code, token.Type, token.Lexeme, token.Position);
+            //}
+
+            // СИНТАКСИЧЕСКИЙ АНАЛИЗ
+            Parser parser = new Parser(tokens);
+            string result = parser.Analyze();
+
+            if (result.Contains("Ошибка"))
+            {
+                richTextBox2.ForeColor = Color.Red;
+                richTextBox2.Text = result;
+            }
+            else
+            {
+                richTextBox2.ForeColor = Color.Green;
+                richTextBox2.Text = "Ошибок не обнаружено";
+            }
+        }
     }
 }
