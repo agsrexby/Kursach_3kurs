@@ -2,17 +2,17 @@ namespace laba1
 {
     public class Token
     {
-        public int Code { get; set; }
-        public string Type { get; set; }
-        public string Lexeme { get; set; }
-        public string Position { get; set; }
+        public string Lexeme { get; set; }          // Сам текст лексемы
+        public int StartPosition { get; set; }      // Позиция начала в тексте
+        public int EndPosition { get; set; }        // Позиция конца в тексте (необязательная, но может быть полезна)
+        public TokenType Type { get; set; }         // Тип токена (из enum)
 
-        public Token(int code, string type, string lexeme, string position)
+        public Token(string lexeme, int start, int end, TokenType type)
         {
-            Code = code;
-            Type = type;
             Lexeme = lexeme;
-            Position = position;
+            StartPosition = start;
+            EndPosition = end;
+            Type = type;
         }
     }
 }

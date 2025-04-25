@@ -1,182 +1,171 @@
+using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace laba1
 {
+    public enum TokenType
+    {
+        Keyword,
+        Identifier,
+        Number,
+        Whitespace,
+        OpenParen,
+        CloseParen,
+        OpenBrace,
+        CloseBrace,
+        Equals,
+        Comma,
+        Assignment,
+        Operation,
+        Semicolon,
+        Newline,
+        Invalid
+    }
+
     public class Lexer
     {
-        private readonly string _input;
-        private int _position;
-        private readonly List<Token> _tokens;
+        private static readonly string[] Keywords = { "operation", "var", "int" };
 
-        private static readonly Dictionary<string, (int code, string type)> Keywords = new Dictionary<string, (int, string)>
+        public static List<Token> Tokenize(string expr)
         {
-            {"operation", (14, "ключевое слово")},
-            {"var", (14, "ключевое слово")},
-            {"int", (14, "ключевое слово")}
-        };
+            List<Token> tokens = new List<Token>();
 
-        private static readonly Dictionary<string, (int code, string type)> Operators = new Dictionary<string, (int, string)>
-        {
-            {"=", (10, "оператор присваивания")},
-            {"+", (12, "арифметический оператор")},
-            {"-", (12, "арифметический оператор")},
-            {"*", (12, "арифметический оператор")},
-            {"/", (12, "арифметический оператор")},
-            {"%", (12, "арифметический оператор")},
-            {"->", (13, "лямбда-оператор")}
-        };
+            if (string.IsNullOrEmpty(expr))
+                return tokens;
 
-        private static readonly Dictionary<char, (int code, string type)> Separators = new Dictionary<char, (int, string)>
-        {
-            {' ', (11, "разделитель")},
-            {'\t', (11, "разделитель")},
-            {'\n', (11, "разделитель")},
-            {'\r', (11, "разделитель")},
-            {'(', (15, "открывающая скобка")},
-            {')', (15, "закрывающая скобка")},
-            {'{', (15, "открывающая фигурная скобка")},
-            {'}', (15, "закрывающая фигурная скобка")},
-            {'[', (15, "открывающая квадратная скобка")},
-            {']', (15, "закрывающая квадратная скобка")},
-            {',', (15, "разделитель аргументов")},
-            {';', (16, "конец оператора")},
-            {':', (15, "двоеточие")},
-            {'?', (15, "вопросительный знак")},
-            {'.', (15, "точка")}
-        };
+            int start = 0;
+            int end = 0;
+            int length = expr.Length;
 
-        public Lexer(string input)
-        {
-            _input = input;
-            _position = 0;
-            _tokens = new List<Token>();
-        }
-
-        public List<Token> Tokenize()
-        {
-            while (_position < _input.Length)
+            while (end < length)
             {
-                var current = Peek();
+                start = end;
+                char current = expr[end];
+                TokenType type = TokenType.Invalid;
 
-                if (char.IsWhiteSpace(current))
+                if (char.IsLetter(current))
                 {
-                    ReadWhiteSpace();
-                }
-                else if (char.IsLetter(current))
-                {
-                    ReadIdentifierOrKeyword();
+                    while (end < length &&
+                           (char.IsLetterOrDigit(expr[end]) || expr[end] == '_'))
+                    {
+                        end++;
+                    }
+                    type = TokenType.Identifier;
+
+                    string value = expr.Substring(start, end - start);
+                    foreach (var keyword in Keywords)
+                    {
+                        if (value == keyword)
+                        {
+                            type = TokenType.Keyword;
+                            break;
+                        }
+                    }
                 }
                 else if (char.IsDigit(current))
                 {
-                    ReadNumber();
-                }
-                else if (current == '-' && Peek(1) == '>')
-                {
-                    ReadLambdaArrow();
-                }
-                else if (Operators.ContainsKey(current.ToString()))
-                {
-                    ReadOperator();
-                }
-                else if (Separators.ContainsKey(current))
-                {
-                    ReadSeparator();
+                    while (end < length &&
+                           (char.IsDigit(expr[end]) || expr[end] == '.'))
+                    {
+                        end++;
+                    }
+                    type = TokenType.Number;
                 }
                 else
                 {
-                    ReadInvalidCharacter();
+                    switch (current)
+                    {
+                        case ' ':
+                            type = TokenType.Whitespace;
+                            end++;
+                            break;
+                        case '(':
+                            type = TokenType.OpenParen;
+                            end++;
+                            break;
+                        case ')':
+                            type = TokenType.CloseParen;
+                            end++;
+                            break;
+                        case '{':
+                            type = TokenType.OpenBrace;
+                            end++;
+                            break;
+                        case '}':
+                            type = TokenType.CloseBrace;
+                            end++;
+                            break;
+                        case '=':
+                            type = TokenType.Equals;
+                            end++;
+                            break;
+                        case ',':
+                            type = TokenType.Comma;
+                            end++;
+                            break;
+                        case '-':
+                            if (end + 1 < length && expr[end + 1] == '>')
+                            {
+                                type = TokenType.Assignment;
+                                end += 2;
+                            }
+                            else
+                            {
+                                type = TokenType.Operation;
+                                end++;
+                            }
+
+                            break;
+                        case '+':
+                        case '*':
+                        case '/':
+                            type = TokenType.Operation;
+                            end++;
+                            break;
+                        case ';':
+                            type = TokenType.Semicolon;
+                            end++;
+                            break;
+                        case '\n':
+                        case '\r':
+                            type = TokenType.Newline;
+                            end++;
+                            break;
+                        default:
+                            type = TokenType.Invalid;
+                            end++;
+                            break;
+                    }
                 }
+
+                string tokenValue = expr.Substring(start, end - start);
+                tokens.Add(new Token(tokenValue, start + 1, end, type));
             }
 
-            return _tokens;
+            return tokens;
         }
 
-        private char Peek(int offset = 0)
+        public static string TokenTypeToString(TokenType type)
         {
-            return _position + offset < _input.Length ? _input[_position + offset] : '\0';
-        }
-
-        private char Read()
-        {
-            return _position < _input.Length ? _input[_position++] : '\0';
-        }
-
-        private void ReadWhiteSpace()
-        {
-            var start = _position;
-            while (_position < _input.Length && char.IsWhiteSpace(Peek()))
+            switch (type)
             {
-                _position++;
+                case TokenType.Keyword: return "Ключевое слово";
+                case TokenType.Identifier: return "Идентификатор";
+                case TokenType.Number: return "Число";
+                case TokenType.Whitespace: return "Пробел";
+                case TokenType.OpenParen: return "Открывающая скобка";
+                case TokenType.CloseParen: return "Закрывающая скобка";
+                case TokenType.OpenBrace: return "Открывающая фигурная скобка";
+                case TokenType.CloseBrace: return "Закрывающая фигурная скобка";
+                case TokenType.Equals: return "Оператор присваивания";
+                case TokenType.Comma: return "Запятая";
+                case TokenType.Assignment: return "Лямбда-оператор";
+                case TokenType.Operation: return "Арифметическая операция";
+                case TokenType.Semicolon: return "Точка с запятой";
+                case TokenType.Newline: return "Новая строка";
+                default: return "Неизвестный";
             }
-            var lexeme = _input.Substring(start, _position - start);
-            _tokens.Add(new Token(11, "разделитель", lexeme, $"{start + 1}-{_position}"));
-        }
-
-        private void ReadIdentifierOrKeyword()
-        {
-            var start = _position;
-            while (_position < _input.Length && (char.IsLetterOrDigit(Peek()) || Peek() == '_'))
-            {
-                _position++;
-            }
-            var lexeme = _input.Substring(start, _position - start);
-
-            if (Keywords.TryGetValue(lexeme, out var keywordInfo))
-            {
-                _tokens.Add(new Token(keywordInfo.code, keywordInfo.type, lexeme, $"{start + 1}-{_position}"));
-            }
-            else
-            {
-                _tokens.Add(new Token(2, "идентификатор", lexeme, $"{start + 1}-{_position}"));
-            }
-        }
-
-        private void ReadNumber()
-        {
-            var start = _position;
-            while (_position < _input.Length && char.IsDigit(Peek()))
-            {
-                _position++;
-            }
-            var lexeme = _input.Substring(start, _position - start);
-            _tokens.Add(new Token(1, "целое число", lexeme, $"{start + 1}-{_position}"));
-        }
-
-        private void ReadLambdaArrow()
-        {
-            var start = _position;
-            _position += 2; // Пропускаем ->
-            var lexeme = _input.Substring(start, 2);
-            _tokens.Add(new Token(13, "лямбда-оператор", lexeme, $"{start + 1}-{_position}"));
-        }
-
-        private void ReadOperator()
-        {
-            var start = _position;
-            var current = Read().ToString();
-            var lexeme = current;
-
-            // Проверка на составные операторы
-            if (_position < _input.Length && Operators.ContainsKey(current + Peek()))
-            {
-                lexeme += Read();
-            }
-
-            _tokens.Add(new Token(Operators[lexeme].code, Operators[lexeme].type, lexeme, $"{start + 1}-{_position}"));
-        }
-
-        private void ReadSeparator()
-        {
-            var start = _position;
-            var current = Read();
-            _tokens.Add(new Token(Separators[current].code, Separators[current].type, current.ToString(), $"{start + 1}-{_position}"));
-        }
-
-        private void ReadInvalidCharacter()
-        {
-            var start = _position;
-            var current = Read();
-            _tokens.Add(new Token(99, "недопустимый символ", current.ToString(), $"{start + 1}-{_position}"));
         }
     }
 }

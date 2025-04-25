@@ -274,17 +274,10 @@ namespace laba1
                 return;
             }
 
-            // ЛЕКСИЧЕСКИЙ АНАЛИЗ
-            Lexer lexer = new Lexer(input);
-            List<Token> tokens = lexer.Tokenize();
+            // Лексический анализ
+            List<Token> tokens = Lexer.Tokenize(input);
 
-            //dataGridViewTokens.Rows.Clear();
-            //foreach (var token in tokens)
-            //{
-            //    dataGridViewTokens.Rows.Add(token.Code, token.Type, token.Lexeme, token.Position);
-            //}
-
-            // СИНТАКСИЧЕСКИЙ АНАЛИЗ
+            // Синтаксический анализ
             Parser parser = new Parser(tokens);
             string result = parser.Analyze();
 

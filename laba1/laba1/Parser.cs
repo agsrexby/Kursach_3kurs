@@ -1,108 +1,153 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace laba1
 {
     public class Parser
     {
-        private readonly List<Token> _tokens;
-        private int _position;
-        private Token Current => _position < _tokens.Count ? _tokens[_position] : null;
-        private readonly StringBuilder _errors;
+        private readonly List<Token> tokens;
+        private int position = 0;
+        private readonly List<string> errors = new List<string>();
 
         public Parser(List<Token> tokens)
         {
-            _tokens = tokens;
-            _position = 0;
-            _errors = new StringBuilder();
+            this.tokens = tokens;
         }
 
         public string Analyze()
         {
-            while (_position < _tokens.Count)
+            while (!IsAtEnd())
             {
-                ParseStatement();
+                ParseOperation();
             }
 
-            return _errors.Length == 0 ? "Ошибок не обнаружено" : _errors.ToString();
+            return errors.Count == 0 ? "Ошибок не обнаружено" : string.Join(Environment.NewLine, errors);
         }
 
-        private void ParseStatement()
+        private void ParseOperation()
         {
-            if (Match("идентификатор", "operation"))
+            Token token = Peek();
+
+            if (token.Type == TokenType.Keyword && token.Lexeme == "operation")
             {
-                if (!Match("оператор присваивания", "="))
+                Advance(); // Пропускаем 'operation'
+
+                if (!Match(TokenType.Identifier))
                 {
-                    Error("Ожидался знак '=' после 'operation'");
+                    ReportError("Ожидался идентификатор после 'operation'");
                     return;
                 }
 
-                ParseLambda();
-
-                if (!Match("конец оператора", ";"))
+                if (!Match(TokenType.OpenParen))
                 {
-                    Error("Ожидалась точка с запятой ';' в конце лямбда-выражения");
+                    ReportError("Ожидалась открывающая скобка '(' после идентификатора");
+                    return;
+                }
+
+                ParseParameters();
+
+                if (!Match(TokenType.CloseParen))
+                {
+                    ReportError("Ожидалась закрывающая скобка ')'");
+                    return;
+                }
+
+                if (!Match(TokenType.Assignment))
+                {
+                    ReportError("Ожидался оператор '->'");
+                    return;
+                }
+
+                if (!Match(TokenType.Identifier))
+                {
+                    ReportError("Ожидался идентификатор после '->'");
+                    return;
+                }
+
+                if (!Match(TokenType.OpenBrace))
+                {
+                    ReportError("Ожидалась открывающая фигурная скобка '{'");
+                    return;
+                }
+
+                while (!Check(TokenType.CloseBrace) && !IsAtEnd())
+                {
+                    ParseStatement();
+                }
+
+                if (!Match(TokenType.CloseBrace))
+                {
+                    ReportError("Ожидалась закрывающая фигурная скобка '}'");
                 }
             }
             else
             {
-                Error($"Неизвестное выражение: '{Current?.Lexeme}'");
-                _position++;
+                ReportError("Ожидалось ключевое слово 'operation'");
+                Advance(); // Пропускаем токен, чтобы избежать зацикливания
             }
         }
 
-        private void ParseLambda()
+        private void ParseParameters()
         {
-            if (!Match("открывающая скобка", "("))
+            if (Check(TokenType.Keyword) && Peek().Lexeme == "var")
             {
-                Error("Ожидалась '(' после '='");
+                do
+                {
+                    Advance(); // Пропускаем 'var'
+
+                    if (!Match(TokenType.Identifier))
+                    {
+                        ReportError("Ожидался идентификатор параметра после 'var'");
+                        return;
+                    }
+
+                    if (!Match(TokenType.Equals))
+                    {
+                        ReportError("Ожидался символ ':' после идентификатора параметра");
+                        return;
+                    }
+
+                    if (!Match(TokenType.Keyword) || Previous().Lexeme != "int")
+                    {
+                        ReportError("Ожидалось ключевое слово 'int' после ':'");
+                        return;
+                    }
+                }
+                while (Match(TokenType.Comma));
+            }
+        }
+
+        private void ParseStatement()
+        {
+            if (!Match(TokenType.Identifier))
+            {
+                ReportError("Ожидался идентификатор в начале выражения");
+                Synchronize();
                 return;
             }
 
-            bool expectingIdentifier = true;
-            while (!Match("закрывающая скобка", ")"))
+            if (!Match(TokenType.Equals))
             {
-                if (expectingIdentifier)
-                {
-                    if (!Match("идентификатор"))
-                    {
-                        Error("Ожидался идентификатор параметра");
-                        return;
-                    }
-                    expectingIdentifier = false;
-                }
-                else
-                {
-                    if (!Match("разделитель аргументов", ","))
-                    {
-                        Error("Ожидалась ',' между параметрами");
-                        return;
-                    }
-                    expectingIdentifier = true;
-                }
-
-                if (_position >= _tokens.Count)
-                {
-                    Error("Ожидалась закрывающая скобка ')'");
-                    return;
-                }
-            }
-
-            if (!Match("лямбда-оператор", "->"))
-            {
-                Error("Ожидался лямбда-оператор '->'");
+                ReportError("Ожидался оператор '=' после идентификатора");
+                Synchronize();
                 return;
             }
 
             ParseExpression();
+
+            if (!Match(TokenType.Semicolon))
+            {
+                ReportError("Ожидалась точка с запятой ';' в конце выражения");
+                Synchronize();
+            }
         }
 
         private void ParseExpression()
         {
             ParseTerm();
-            while (Match("арифметический оператор", "+") || Match("арифметический оператор", "-"))
+
+            while (Match(TokenType.Operation))
             {
                 ParseTerm();
             }
@@ -110,43 +155,75 @@ namespace laba1
 
         private void ParseTerm()
         {
-            ParseFactor();
-            while (Match("арифметический оператор", "*") || Match("арифметический оператор", "/"))
+            if (Check(TokenType.Identifier) || Check(TokenType.Number))
             {
-                ParseFactor();
+                Advance();
+            }
+            else
+            {
+                ReportError("Ожидался идентификатор или число в выражении");
+                Advance();
             }
         }
 
-        private void ParseFactor()
+        private bool Match(TokenType type)
         {
-            if (Match("открывающая скобка", "("))
+            if (Check(type))
             {
-                ParseExpression();
-                if (!Match("закрывающая скобка", ")"))
-                {
-                    Error("Ожидалась закрывающая скобка ')'");
-                }
-            }
-            else if (!Match("идентификатор") && !Match("целое число"))
-            {
-                Error("Ожидался идентификатор или целое число");
-            }
-        }
-
-        private bool Match(string type, string lexeme = null)
-        {
-            if (Current != null && Current.Type == type && (lexeme == null || Current.Lexeme == lexeme))
-            {
-                _position++;
+                Advance();
                 return true;
             }
             return false;
         }
 
-        private void Error(string message)
+        private bool Check(TokenType type)
         {
-            var pos = Current != null ? Current.Position : "конец";
-            _errors.AppendLine($"[Ошибка в позиции {pos}] {message}");
+            if (IsAtEnd()) return false;
+            return Peek().Type == type;
+        }
+
+        private Token Advance()
+        {
+            if (!IsAtEnd()) position++;
+            return Previous();
+        }
+
+        private bool IsAtEnd()
+        {
+            return position >= tokens.Count;
+        }
+
+        private Token Peek()
+        {
+            return tokens[position];
+        }
+
+        private Token Previous()
+        {
+            return tokens[position - 1];
+        }
+
+        private void ReportError(string message)
+        {
+            Token token = Peek();
+            errors.Add($"Ошибка: {message} (позиция: {token.StartPosition})");
+        }
+
+        private void Synchronize()
+        {
+            while (!IsAtEnd())
+            {
+                if (Previous().Type == TokenType.Semicolon) return;
+
+                switch (Peek().Type)
+                {
+                    case TokenType.Keyword:
+                    case TokenType.Identifier:
+                        return;
+                }
+
+                Advance();
+            }
         }
     }
 }
