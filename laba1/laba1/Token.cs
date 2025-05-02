@@ -1,18 +1,31 @@
-namespace laba1
-{
-    public class Token
-    {
-        public string Lexeme { get; set; }          // Сам текст лексемы
-        public int StartPosition { get; set; }      // Позиция начала в тексте
-        public int EndPosition { get; set; }        // Позиция конца в тексте (необязательная, но может быть полезна)
-        public TokenType Type { get; set; }         // Тип токена (из enum)
+namespace laba1;
 
-        public Token(string lexeme, int start, int end, TokenType type)
-        {
-            Lexeme = lexeme;
-            StartPosition = start;
-            EndPosition = end;
-            Type = type;
-        }
+public enum TokenType
+{
+    Identifier,
+    Assign,
+    OpenParen,
+    CloseParen,
+    Comma,
+    LambdaArrow,
+    Operator,
+    Semicolon,
+    Whitespace,
+    Unknown
+}
+
+public class Token
+{
+    public TokenType Type { get; set; }
+    public string Value { get; set; }
+    public int Position { get; set; }
+
+    public Token(TokenType type, string value, int position)
+    {
+        Type = type;
+        Value = value;
+        Position = position;
     }
+
+    public override string ToString() => $"{Type}('{Value}') at {Position}";
 }

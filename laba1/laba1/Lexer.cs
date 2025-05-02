@@ -1,171 +1,87 @@
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 namespace laba1
 {
-    public enum TokenType
-    {
-        Keyword,
-        Identifier,
-        Number,
-        Whitespace,
-        OpenParen,
-        CloseParen,
-        OpenBrace,
-        CloseBrace,
-        Equals,
-        Comma,
-        Assignment,
-        Operation,
-        Semicolon,
-        Newline,
-        Invalid
-    }
-
     public class Lexer
     {
-        private static readonly string[] Keywords = { "operation", "var", "int" };
+        private readonly string _input;
+        private int _position;
 
-        public static List<Token> Tokenize(string expr)
+        private static readonly Regex IdentifierRegex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled);
+
+        public Lexer(string input)
+        {
+            _input = input;
+        }
+
+        public List<Token> Tokenize()
         {
             List<Token> tokens = new List<Token>();
 
-            if (string.IsNullOrEmpty(expr))
-                return tokens;
-
-            int start = 0;
-            int end = 0;
-            int length = expr.Length;
-
-            while (end < length)
+            while (_position < _input.Length)
             {
-                start = end;
-                char current = expr[end];
-                TokenType type = TokenType.Invalid;
+                char current = _input[_position];
+                int start = _position;
 
-                if (char.IsLetter(current))
+                if (char.IsWhiteSpace(current))
                 {
-                    while (end < length &&
-                           (char.IsLetterOrDigit(expr[end]) || expr[end] == '_'))
-                    {
-                        end++;
-                    }
-                    type = TokenType.Identifier;
-
-                    string value = expr.Substring(start, end - start);
-                    foreach (var keyword in Keywords)
-                    {
-                        if (value == keyword)
-                        {
-                            type = TokenType.Keyword;
-                            break;
-                        }
-                    }
+                    _position++;
+                    continue;
                 }
-                else if (char.IsDigit(current))
+                else if (current == '=')
                 {
-                    while (end < length &&
-                           (char.IsDigit(expr[end]) || expr[end] == '.'))
+                    tokens.Add(new Token(TokenType.Assign, "=", _position++));
+                }
+                else if (current == '(')
+                {
+                    tokens.Add(new Token(TokenType.OpenParen, "(", _position++));
+                }
+                else if (current == ')')
+                {
+                    tokens.Add(new Token(TokenType.CloseParen, ")", _position++));
+                }
+                else if (current == ',')
+                {
+                    tokens.Add(new Token(TokenType.Comma, ",", _position++));
+                }
+                else if (current == '-' && Peek() == '>')
+                {
+                    tokens.Add(new Token(TokenType.LambdaArrow, "->", _position));
+                    _position += 2;
+                }
+                else if (current == '+' || current == '-' || current == '*' || current == '/')
+                {
+                    tokens.Add(new Token(TokenType.Operator, current.ToString(), _position++));
+                }
+                else if (current == ';')
+                {
+                    tokens.Add(new Token(TokenType.Semicolon, ";", _position++));
+                }
+                else if (char.IsLetter(current) || current == '_')
+                {
+                    var match = IdentifierRegex.Match(_input.Substring(_position));
+                    if (match.Success)
                     {
-                        end++;
+                        string value = match.Value;
+                        tokens.Add(new Token(TokenType.Identifier, value, _position));
+                        _position += value.Length;
                     }
-                    type = TokenType.Number;
+                    else
+                    {
+                        tokens.Add(new Token(TokenType.Unknown, current.ToString(), _position++));
+                    }
                 }
                 else
                 {
-                    switch (current)
-                    {
-                        case ' ':
-                            type = TokenType.Whitespace;
-                            end++;
-                            break;
-                        case '(':
-                            type = TokenType.OpenParen;
-                            end++;
-                            break;
-                        case ')':
-                            type = TokenType.CloseParen;
-                            end++;
-                            break;
-                        case '{':
-                            type = TokenType.OpenBrace;
-                            end++;
-                            break;
-                        case '}':
-                            type = TokenType.CloseBrace;
-                            end++;
-                            break;
-                        case '=':
-                            type = TokenType.Equals;
-                            end++;
-                            break;
-                        case ',':
-                            type = TokenType.Comma;
-                            end++;
-                            break;
-                        case '-':
-                            if (end + 1 < length && expr[end + 1] == '>')
-                            {
-                                type = TokenType.Assignment;
-                                end += 2;
-                            }
-                            else
-                            {
-                                type = TokenType.Operation;
-                                end++;
-                            }
-
-                            break;
-                        case '+':
-                        case '*':
-                        case '/':
-                            type = TokenType.Operation;
-                            end++;
-                            break;
-                        case ';':
-                            type = TokenType.Semicolon;
-                            end++;
-                            break;
-                        case '\n':
-                        case '\r':
-                            type = TokenType.Newline;
-                            end++;
-                            break;
-                        default:
-                            type = TokenType.Invalid;
-                            end++;
-                            break;
-                    }
+                    tokens.Add(new Token(TokenType.Unknown, current.ToString(), _position++));
                 }
-
-                string tokenValue = expr.Substring(start, end - start);
-                tokens.Add(new Token(tokenValue, start + 1, end, type));
             }
 
             return tokens;
         }
 
-        public static string TokenTypeToString(TokenType type)
-        {
-            switch (type)
-            {
-                case TokenType.Keyword: return "Ключевое слово";
-                case TokenType.Identifier: return "Идентификатор";
-                case TokenType.Number: return "Число";
-                case TokenType.Whitespace: return "Пробел";
-                case TokenType.OpenParen: return "Открывающая скобка";
-                case TokenType.CloseParen: return "Закрывающая скобка";
-                case TokenType.OpenBrace: return "Открывающая фигурная скобка";
-                case TokenType.CloseBrace: return "Закрывающая фигурная скобка";
-                case TokenType.Equals: return "Оператор присваивания";
-                case TokenType.Comma: return "Запятая";
-                case TokenType.Assignment: return "Лямбда-оператор";
-                case TokenType.Operation: return "Арифметическая операция";
-                case TokenType.Semicolon: return "Точка с запятой";
-                case TokenType.Newline: return "Новая строка";
-                default: return "Неизвестный";
-            }
-        }
+        private char Peek() => _position + 1 < _input.Length ? _input[_position + 1] : '\0';
     }
 }

@@ -232,7 +232,7 @@ namespace laba1
 
         private void toolStripButton9_Click(object sender, EventArgs e)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         private void toolStripButton10_Click(object sender, EventArgs e)
@@ -261,36 +261,21 @@ namespace laba1
 
         private void richTextBox2_TextChanged(object sender, EventArgs e)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         private void пускToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string input = richTextBox1.Text.Trim();
+            string input = richTextBox1.Text;
+            Lexer lexer = new(input);
+            var tokens = lexer.Tokenize();
 
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                MessageBox.Show("Введите текст для анализа.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            Parser parser = new(tokens);
+            var errors = parser.Parse();
 
-            // Лексический анализ
-            List<Token> tokens = Lexer.Tokenize(input);
-
-            // Синтаксический анализ
-            Parser parser = new Parser(tokens);
-            string result = parser.Analyze();
-
-            if (result.Contains("Ошибка"))
-            {
-                richTextBox2.ForeColor = Color.Red;
-                richTextBox2.Text = result;
-            }
-            else
-            {
-                richTextBox2.ForeColor = Color.Green;
-                richTextBox2.Text = "Ошибок не обнаружено";
-            }
+            richTextBox2.Text = errors.Count == 0
+                ? "Ошибок не обнаружено"
+                : string.Join(Environment.NewLine, errors);
         }
     }
 }
